@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from json_tools import extract_json,validate_json_with_model,model_to_json,json_to_pydantic
 load_dotenv()  # take environment variables from .env.
 from typing import List
-
+import json
 import streamlit as st
 import os
 import pathlib
@@ -21,8 +21,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 class TermBase(BaseModel):
     term: str
     amount: str
-    section: str
-    subsection: str
+    condition: str
 
 
 
@@ -57,9 +56,9 @@ uploaded_file = st.file_uploader("Choose an docs...")
 
 json_model = model_to_json(TermBase(term='term1',
                                     amount = "USD 2,500",
-                                    section = 'section',
-                                    subsection = 'subsection'
-                                  ))
+                                    condition = ''
+
+))
 
 
 # Open the document
@@ -98,3 +97,8 @@ if submit:
     response=get_gemini_response(input_prompt,doc_data,input)
     st.subheader("The Response is")
     st.write(response)
+    output = {}
+    output['terms'] = response
+    with open("terms.json", "w") as file:
+        # Write the entire list to the file
+        json.dump(output, file)

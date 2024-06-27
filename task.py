@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import json
 from json_tools import extract_json, validate_json_with_model, model_to_json, json_to_pydantic
 import pandas as pd
 import time
@@ -52,7 +53,7 @@ def input_doc_setup(uploaded_file):
         raise FileNotFoundError("No file uploaded")
 
 
-st.set_page_config(page_title="Gemini Image Demo")
+st.set_page_config(page_title="Extract Contractor Demo")
 
 st.header("Contractor Analysis Application")
 input = st.text_input("Input Prompt: ", key="input")
@@ -78,11 +79,24 @@ input_prompt = f"""
 
                """
 
-## If ask button is clicked
+import numpy as np
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
+
+
 
 if submit:
-
+    data = []
     for index in cost_df.index:
+        output = {}
         doc_data = cost_df.loc[index]['Task Description']
         st.write(doc_data)
 
@@ -90,5 +104,13 @@ if submit:
 
         st.subheader("The Response is")
         st.write(response)
+        output['description'] = response
         st.write(f"cost: {cost_df.loc[index]['Amount']}")
+        output['cost'] = cost_df.loc[index]['Amount']
+        print(output)
+        data.append(output)
         time.sleep(3)
+    print(data)
+    with open("output.json", "w") as file:
+        # Write the entire list to the file
+        json.dump(data, file, cls=NpEncoder)
