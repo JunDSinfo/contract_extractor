@@ -21,11 +21,9 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 class TaskBase(BaseModel):
     task: str
     location: str
-    duration: str
     note: str
 json_model = model_to_json(TaskBase(task='',
                                     location = '',
-                                    duration = '',
                                     note = ''
                                   ))
 
@@ -111,6 +109,6 @@ if submit:
         data.append(output)
         time.sleep(3)
     print(data)
-    with open("output.json", "w") as file:
+    with open("output2.json", "w") as file:
         # Write the entire list to the file
         json.dump(data, file, cls=NpEncoder)
