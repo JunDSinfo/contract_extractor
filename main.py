@@ -1,4 +1,4 @@
-from model import Auditor
+from model import TaskAuditor, TermAuditor, Analyzer
 from docx import Document
 import pandas as pd
 import json
@@ -6,6 +6,8 @@ import streamlit as st
 import os
 import time
 from pre_process import task_prompt, learning_prompt, contractor_prompt
+from utilities import extract_json, validate_json_with_model, get_amount
+from pre_process import TermBase, TaskBase
 
 def input_doc_setup(uploaded_file):
     # Check if a file has been uploaded
@@ -23,11 +25,13 @@ def input_doc_setup(uploaded_file):
     else:
         raise FileNotFoundError("No file uploaded")
 
-def get_gemini_response(doc, prompt):
-    AD = Auditor()
-    model = AD.get_model()
-    response = model.generate_content([doc, prompt])
-    return response.text
+
+
+
+
+
+
+
 
 
 
@@ -51,34 +55,52 @@ st.write(cost_df)
 
 submit=st.button("Tell me about the docs")
 
+auditor_contract = TermAuditor(contractor_prompt)
+auditor_task = TaskAuditor(task_prompt)
+analytics = Analyzer(learning_prompt)
 
 if submit:
+    data = []
     progress_text_term = "Reading contract terms. Please wait."
 
     progress_bar = st.progress(0)
-    response = get_gemini_response(text, contractor_prompt)
+    response = auditor_contract.get_response(text)
 
-    datav = json.loads(f"[{response}]")
-    progress_bar.progress( 100, text=progress_text_term)
+    dt = extract_json(response)
+    df = pd.DataFrame(dt)
+    st.dataframe(df)
 
+    progress_bar.progress(100, text=progress_text_term)
     progress_text_task = "Reading tasks. Please wait."
-    data = []
     my_bar = st.progress(0, text=progress_text_task)
-
     for index in cost_df.index:
         output = {}
         doc_data = cost_df.loc[index]['Task Description']
-        response = get_gemini_response(doc_data, task_prompt)
+        response = auditor_task.get_response(doc_data)
 
         output['description'] = response
         # st.write(f"cost: {cost_df.loc[index]['Amount']}")
         output['cost'] = cost_df.loc[index]['Amount']
         data.append(output)
         time.sleep(3)
-        my_bar.progress(index + 1, text=progress_text_task)
+        my_bar.progress((index + 1)/len(cost_df.index), text=progress_text_task)
     st.write(pd.DataFrame(data))
 
-    df = pd.DataFrame(datav)
+
+    st.header('Analysis and :blue [Result] :sunglasses:', divider='rainbow')
+    progress_analysis_task = "Analyzing..... Please wait."
+    my_bar = st.progress(0, text=progress_analysis_task)
+
+    evaluation = []
+    # amount_audit = []
+    for i, task in enumerate(cost_df['Task Description']):
+        output = analytics.analyze(task)
+        evaluation.append(output)
+        # amount_audit.append(get_amount(output))
+        my_bar.progress((i+1)/100, text=progress_analysis_task)
+
+    df['evaluation'] = evaluation
+    # df['amount audit'] = amount_audit
+
     st.dataframe(df)
 
-##TODO: call the prompt of evaluation
