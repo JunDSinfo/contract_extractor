@@ -1,19 +1,14 @@
 from model import TaskAuditor, TermAuditor, Analyzer
 from docx import Document
 import plotly.graph_objects as go
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 
-import json
 import streamlit as st
-import os
 import time
 from pre_process import task_prompt, learning_prompt, contractor_prompt
-from utilities import extract_json, validate_json_with_model, get_amount
-from pre_process import TermBase, TaskBase
+from utilities import extract_json,  get_amount
 
 def input_doc_setup(uploaded_file):
     # Check if a file has been uploaded
