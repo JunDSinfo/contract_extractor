@@ -4,6 +4,18 @@ from pydantic import BaseModel, ValidationError
 from typing import get_type_hints
 import numpy as np
 
+
+import re
+pattern = r'=\s*(.*)'
+
+def get_amount(sentence):
+    try:
+        matches = re.findall(pattern, sentence)
+        return float(matches[0].replace('$', '').replace(',', ''))
+    except Exception as err:
+        print("Oops! Error at %s:" % str(err))
+        return None
+
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -111,3 +123,6 @@ def validate_json_with_model(model_class, json_data):
         raise ValueError("Invalid JSON data type. Expected dict or list.")
 
     return validated_data, validation_errors
+
+
+
